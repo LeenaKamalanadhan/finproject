@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Login - Secure Medical Portal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root{ --brand-1: #0d6efd; --brand-2: #0056b3; --card-radius: 12px; }
+    body { background: linear-gradient(180deg,#e9f1f7 0%, #f4f7fb 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .split-card { width: 100%; max-width: 1000px; border-radius: var(--card-radius); overflow: hidden; box-shadow: 0 10px 30px rgba(18, 38, 63, 0.12); display: flex; background: #fff; flex-wrap: nowrap; }
+    .left-panel { flex: 0 0 45%; background: linear-gradient(135deg,var(--brand-1), var(--brand-2)); color: #fff; padding: 2.5rem 1.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; }
+    .left-panel img { width: 110px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); }
+    .left-panel h2 { margin: 0; font-size: 1.6rem; font-weight: 700; }
+    .left-panel p { margin: 0; opacity: 0.95; font-size: 0.95rem; }
+    .right-panel { flex: 1 1 55%; padding: 2.25rem; background: #fff; }
+    .right-panel .card-title { font-weight: 700; margin-bottom: .6rem; }
+    .form-control { border-radius: 8px; min-height: 44px; }
+    .password-toggle { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #6c757d; font-size: 1rem; padding: 0.25rem; }
+    .position-relative { position: relative; }
+    .btn-primary { width: 100%; border-radius: 8px; padding: .65rem; font-weight: 600; }
+    .status { margin-top: 0.85rem; min-height: 1.2rem; font-weight: 600; }
+    .status.success { color: #0f5132; background: #d1e7dd; padding: .45rem .6rem; border-radius:6px; }
+    .status.error   { color: #842029; background: #f8d7da; padding: .45rem .6rem; border-radius:6px; }
+    @media (max-width: 767.98px) { .split-card { flex-direction: column; } .left-panel { padding: 1.5rem; } .right-panel { padding: 1.25rem; } }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="split-card">
+
+    <div class="left-panel">
+      <img src="https://img.icons8.com/ios-filled/100/ffffff/hospital-room.png" alt="logo">
+      <h2>MedVault Plus</h2>
+      <p>Sign in to access your dashboard and securely manage medical records.</p>
+    </div>
+
+    <div class="right-panel">
+      <h4 class="card-title">Staff Login</h4>
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="staff_id" class="form-label">Staff ID or Email</label>
+          <input type="text" class="form-control" id="staff_id" placeholder="Enter staff id or email" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="hospital_id" class="form-label">Hospital ID</label>
+          <input type="text" class="form-control" id="hospital_id" placeholder="Enter hospital id" required>
+        </div>
+
+        <div class="mb-3 position-relative">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+          <button type="button" class="password-toggle" data-target="password"><i class="fa fa-eye"></i></button>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn btn-primary">Login</button>
+        <div id="status" class="status"></div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Password toggle
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+  });
+
+  function showStatus(text, type) {
+    const el = document.getElementById('status');
+    el.textContent = text || '';
+    el.className = 'status ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : '');
+  }
+
+  // *** CRITICAL CHANGE ***
+  // Change line 106: Update the fetch URL to use absolute path
+  // BEFORE: const resp = await fetch('/api/auth/login', {
+  // AFTER: Using absolute URL with your server's port (5000)
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showStatus('', null);
+
+    const staff_id = document.getElementById('staff_id').value.trim();
+    const hospital_id = document.getElementById('hospital_id').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      // *** CHANGE 1: Use absolute URL instead of relative path ***
+      // This fixes the "405 Method Not Allowed" error
+      // Your server runs on localhost:5000, so we need to specify the full address
+      const resp = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_id, hospital_id, password })
+      });
+
+      console.log('Response status:', resp.status); // Debugging line
+
+      // *** CHANGE 2: Better error handling ***
+      // Check if response is JSON before parsing
+      const contentType = resp.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await resp.text();
+        console.error('Server returned non-JSON:', text);
+        showStatus('Server error: Invalid response format', 'error');
+        return;
+      }
+
+      const data = await resp.json();
+
+      if (resp.ok && data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('staff', JSON.stringify(data.staff));
+        showStatus('Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          // *** CHANGE 3: Fix dashboard path ***
+          // Use relative path for dashboard since it's in the same folder
+          window.location.href = 'dashboard.html';
+        }, 700);
+      } else {
+        showStatus(data.error || 'Invalid credentials', 'error');
+      }
+    } catch (err) {
+      console.error('Network error:', err);
+      showStatus('Cannot connect to server. Make sure server.js is running on port 5000.', 'error');
+    }
+  });
+</script>
+
+</body>
+</html>

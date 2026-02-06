@@ -1,0 +1,70 @@
+[
+  {
+    "name": "Leena K",
+    "staffId": "23",
+    "email": "2022ec0024@svce.ac.in",
+    "password": "$2b$10$QQwsPaQg7sdUiFZnvISME.wGV7QQXc4zSnft9D2SNkAZTyECM4kse",
+    "role": "Doctor"
+  },
+  {
+    "name": "Renuka Devi",
+    "staffId": "10",
+    "email": "2022ec0217@svce.ac.in",
+    "password": "$2b$10$aSaCdK7Hey1tm.N6jeDNL.Mfv58hJ9zVCRDv7Gs9sq6qWBsP8cCae",
+    "role": "Doctor"
+  },
+  {
+    "staff_id": "staff003",
+    "name": "Dr C",
+    "phone": "+919952960476",
+    "password_hash": "$2b$10$G44pMFtRFAqaKwQJ40nOSO7ylrvCCwYBzbRho0V1x9w.UFQvvikMm"
+  },
+  {
+    "staff_id": "STAFF001",
+    "name": "John",
+    "phone": "HOSP1001",
+    "password_hash": "$2b$10$ZuDItoSJsEboaHgS96MXk.35oHD8pQiHoniU3DPk8bHesxGZ.vHWC"
+  },
+  {
+    "staff_id": "STAFF001",
+    "name": "John",
+    "phone": "HOSP1001",
+    "password_hash": "$2b$10$eg3BHTEJSZYrhAU0i.YFheopt2GYaHr6eI0PI1Xaxn5lISBEdajFu"
+  },
+  {
+    "staff_id": "STAFF001",
+    "name": "John",
+    "phone": "HOSP1001",
+    "password_hash": "$2b$10$kRaGtTk/RGVMw/IeFo0KNOMKOa7uWq1ak4WnQqB2VQau4qcImMMEi"
+  },
+  {
+    "staff_id": "STAFF001",
+    "name": "John Doe",
+    "phone": "HOSP1001",
+    "password_hash": "$2b$10$yxcAmmDX2sdeU6m5Y2Zghula.jIDsoz2hGATXELmMhAa3bAWGLvga"
+  },
+  {
+    "staff_id": "STAFF002",
+    "name": "John Doe",
+    "hospital_id": "HOSP1001",
+    "email": "kleena1403@gmail.com",
+    "phone": "+919952960476",
+    "password_hash": "$2b$10$3H7G9EHtennuK0L26PqJeOArVHHtWvy8MyyRfdpiUDwLlxBVhucNC"
+  },
+  {
+    "staff_id": "STAFF003",
+    "name": "Renuka",
+    "hospital_id": "HOSP1001",
+    "email": "renukadevit2803@gmail.com",
+    "phone": "+919344539912",
+    "password_hash": "$2b$10$IOAPn1qrhXNIjT2114tQY.4PJozjrp0nMzXIN3BM.FSu1rP9FJ8JS"
+  },
+  {
+    "staff_id": "STAFF005",
+    "name": "Leena K",
+    "hospital_id": "HOSP1001",
+    "email": "kleena1403@gmail.com",
+    "phone": "+919551290476",
+    "password_hash": "$2b$10$nxOylWXW3HQ0AssGE7viZeUVuxqYxEF5aKYfz6qwk6I/Q05TtB1/a"
+  }
+]

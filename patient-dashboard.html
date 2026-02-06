@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - MedVault Plus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #0d6efd;
+            --light-blue: #e3f2fd;
+            --success-green: #198754;
+            --warning-orange: #fd7e14;
+            --card-radius: 12px;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+        .sidebar {
+            height: 100vh;
+            background: linear-gradient(180deg, #0d6efd 0%, #0056b3 100%);
+            color: white;
+            position: fixed;
+            overflow-y: auto;
+            width: 260px;
+            padding-top: 20px;
+        }
+        .sidebar .logo {
+            text-align: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.85);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            margin: 0.25rem 1rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .sidebar .nav-link i {
+            width: 24px;
+            margin-right: 12px;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        .header-profile {
+            background: white;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .profile-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .profile-info h5 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .profile-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .stat-card {
+            background: white;
+            border-radius: var(--card-radius);
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .section-content.active {
+            display: block;
+        }
+        .quick-action-btn {
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            height: 100%;
+        }
+        .quick-action-btn:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+        .appointment-card, .prescription-card {
+            background: white;
+            border-left: 4px solid var(--primary-blue);
+            border-radius: var(--card-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-confirmed { background: #d1e7dd; color: #0f5132; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .image-thumbnail {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .image-thumbnail:hover {
+            transform: scale(1.05);
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: var(--card-radius);
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                min-height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar d-none d-md-block">
+        <div class="logo">
+            <img src="https://img.icons8.com/ios-filled/100/ffffff/hospital-3.png" width="50" alt="Logo">
+            <h5 class="mt-2 mb-0">MedVault Plus</h5>
+            <small class="opacity-75">Patient Portal</small>
+        </div>
+        <div class="nav flex-column mt-3">
+            <a class="nav-link active" href="#dashboard" data-section="dashboard">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a class="nav-link" href="#appointments" data-section="appointments">
+                <i class="fas fa-calendar-check"></i> Appointments
+            </a>
+            <a class="nav-link" href="#prescriptions" data-section="prescriptions">
+                <i class="fas fa-file-prescription"></i> Prescriptions
+            </a>
+            <a class="nav-link" href="#reports" data-section="reports">
+                <i class="fas fa-file-medical"></i> Medical Reports
+            </a>
+            <a class="nav-link" href="#scans" data-section="scans">
+                <i class="fas fa-x-ray"></i> Scans & X-Rays
+            </a>
+            <a class="nav-link" href="#access" data-section="access">
+                <i class="fas fa-shield-alt"></i> Access Log
+            </a>
+        </div>
+        <div class="mt-auto p-3">
+            <button class="btn btn-outline-light w-100" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header with Profile in Upper Right -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Personal Health Record</h3>
+                <p class="text-muted mb-0" id="welcomeMessage">Welcome to your secure medical portal</p>
+            </div>
+            <div class="header-profile">
+                <div class="profile-avatar" id="profileAvatar">JD</div>
+                <div class="profile-info">
+                    <h5 id="patientName">Loading...</h5>
+                    <p id="patientId">Loading...</p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#profile" data-section="profile">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" id="mobileLogoutBtn">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section (Default) -->
+        <section id="dashboardSection" class="section-content active">
+            <!-- Error Message Area -->
+            <div id="dashboardError" class="error-message" style="display: none;"></div>
+            
+            <!-- Quick Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h4 id="upcomingCount">0</h4>
+                        <p class="text-muted mb-0">Upcoming Appointments</p>
+                        <a href="#appointments" data-section="appointments" class="small text-primary text-decoration-none">
+                            View all <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-prescription"></i>
+                        </div>
+                        <h4 id="prescriptionCount">0</h4>
+                        <p class="text-muted mb-0">Active Prescriptions</p>
+                        <a href="#prescriptions" data-section="prescriptions" class="small text-success text-decoration-none">
+                            Manage <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <h4 id="reportCount">0</h4>
+                        <p class="text-muted mb-0">Medical Reports</p>
+                        <a href="#reports" data-section="reports" class="small text-warning text-decoration-none">
+                            View all <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-comment-medical"></i>
+                        </div>
+                        <h4 id="messageCount">0</h4>
+                        <p class="text-muted mb-0">Unread Messages</p>
+                        <a href="#messages" data-section="messages" class="small text-info text-decoration-none">
+                            Read <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Quick Actions</h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="quick-action-btn" data-section="appointments">
+                                    <i class="fas fa-calendar-plus fa-2x mb-2"></i>
+                                    <h6>Book Appointment</h6>
+                                    <small class="text-muted">Schedule a visit</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="quick-action-btn" data-section="prescriptions">
+                                    <i class="fas fa-prescription-bottle fa-2x mb-2"></i>
+                                    <h6>Request Refill</h6>
+                                    <small class="text-muted">Medication refills</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="quick-action-btn" data-section="reports">
+                                    <i class="fas fa-file-download fa-2x mb-2"></i>
+                                    <h6>Download Reports</h6>
+                                    <small class="text-muted">Get medical records</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="quick-action-btn" data-section="profile">
+                                    <i class="fas fa-user-edit fa-2x mb-2"></i>
+                                    <h6>Update Profile</h6>
+                                    <small class="text-muted">Edit personal info</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Recent Activity</h5>
+                        <div class="list-group list-group-flush" id="recentActivity">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading activity...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Next Appointment</h5>
+                        <div id="nextAppointment">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading appointment...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Appointments Section -->
+        <section id="appointmentsSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>My Appointments</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                    <i class="fas fa-plus me-2"></i> Book New
+                </button>
+            </div>
+            
+            <div id="appointmentsError" class="error-message" style="display: none;"></div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Upcoming Appointments</h5>
+                        <div id="upcomingAppointmentsList">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading appointments...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card mt-4">
+                        <h5 class="mb-3">Appointment History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Doctor</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appointmentHistory">
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>Loading history...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Quick Booking</h5>
+                        <form id="quickBookingForm">
+                            <div class="mb-3">
+                                <label class="form-label">Appointment Type</label>
+                                <select class="form-select" id="appointmentType" required>
+                                    <option value="">Select type</option>
+                                    <option value="Routine Checkup">Routine Checkup</option>
+                                    <option value="Follow-up">Follow-up</option>
+                                    <option value="Consultation">Consultation</option>
+                                    <option value="Lab Test">Lab Test</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Preferred Date</label>
+                                <input type="date" class="form-control" id="appointmentDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Preferred Time</label>
+                                <input type="time" class="form-control" id="appointmentTime" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" id="appointmentDepartment" required>
+                                    <option value="">Select department</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Orthopedics">Orthopedics</option>
+                                    <option value="Neurology">Neurology</option>
+                                    <option value="General Medicine">General Medicine</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="submitBookingBtn">
+                                <i class="fas fa-calendar-plus me-2"></i> Book Appointment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prescriptions Section -->
+        <section id="prescriptionsSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>My Prescriptions</h4>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#requestPrescriptionModal">
+                    <i class="fas fa-prescription me-2"></i> Request Refill
+                </button>
+            </div>
+            
+            <div id="prescriptionsError" class="error-message" style="display: none;"></div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Active Prescriptions</h5>
+                        <div id="activePrescriptionsList">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading prescriptions...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Medication Schedule</h5>
+                        <div id="medicationSchedule">
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading schedule...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Medical Reports Section -->
+        <section id="reportsSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>Medical Reports</h4>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" id="filterReportsBtn" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-2"></i> Filter
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item filter-report" data-type="all">All Reports</a></li>
+                        <li><a class="dropdown-item filter-report" data-type="Lab Report">Lab Reports</a></li>
+                        <li><a class="dropdown-item filter-report" data-type="Doctor Notes">Doctor Notes</a></li>
+                        <li><a class="dropdown-item filter-report" data-type="Discharge Summary">Discharge Summary</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="reportsError" class="error-message" style="display: none;"></div>
+            
+            <div class="stat-card">
+                <div class="row g-3" id="reportsGrid">
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-2x me-2"></i><br>
+                        <p class="mt-3">Loading medical reports...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scans & X-Rays Section -->
+        <section id="scansSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>Medical Images & Scans</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
+                    <i class="fas fa-upload me-2"></i> Upload Image
+                </button>
+            </div>
+            
+            <div id="scansError" class="error-message" style="display: none;"></div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Image Gallery</h5>
+                        <div class="row g-3" id="imageGallery">
+                            <div class="col-12 text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-2x me-2"></i><br>
+                                <p class="mt-3">Loading medical images...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Image Viewer</h5>
+                        <div id="imageViewer">
+                            <div class="text-center py-4">
+                                <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Select an image to view</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Access Control Section -->
+        <section id="accessSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>Access Log & Security</h4>
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Your access history for the last 30 days
+                </div>
+            </div>
+            
+            <div id="accessError" class="error-message" style="display: none;"></div>
+            
+            <div class="stat-card">
+                <h5 class="mb-3">Recent Access History</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Action</th>
+                                <th>Device/IP</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accessLogTable">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Loading access log...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profileSection" class="section-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>My Profile</h4>
+                <button class="btn btn-outline-primary" id="refreshProfileBtn">
+                    <i class="fas fa-sync-alt me-2"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="profileError" class="error-message" style="display: none;"></div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Personal Information</h5>
+                        <form id="profileForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="firstName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="lastName" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="profileEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="profilePhone">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="dateOfBirth" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Blood Type</label>
+                                    <input type="text" class="form-control" id="bloodType" readonly>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="cancelProfileBtn">
+                                Cancel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="stat-card">
+                        <h5 class="mb-3">Emergency Contact</h5>
+                        <form id="emergencyForm">
+                            <div class="mb-3">
+                                <label class="form-label">Contact Name</label>
+                                <input type="text" class="form-control" id="emergencyName">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Relationship</label>
+                                <input type="text" class="form-control" id="emergencyRelationship">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="emergencyPhone">
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary w-100" id="saveEmergencyBtn">
+                                <i class="fas fa-save me-2"></i> Update
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Book Appointment Modal -->
+    <div class="modal fade" id="bookAppointmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Book New Appointment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="detailedAppointmentForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Appointment Type *</label>
+                                <select class="form-select" id="modalAppointmentType" required>
+                                    <option value="">Select type</option>
+                                    <option value="Routine Checkup">Routine Checkup</option>
+                                    <option value="Follow-up">Follow-up</option>
+                                    <option value="Consultation">Consultation</option>
+                                    <option value="Procedure">Procedure</option>
+                                    <option value="Lab Test">Lab Test</option>
+                                    <option value="Vaccination">Vaccination</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department *</label>
+                                <select class="form-select" id="modalDepartment" required>
+                                    <option value="">Select department</option>
+                                    <option value="Cardiology">Cardiology</option>
+                                    <option value="Orthopedics">Orthopedics</option>
+                                    <option value="Neurology">Neurology</option>
+                                    <option value="Pediatrics">Pediatrics</option>
+                                    <option value="General Medicine">General Medicine</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date *</label>
+                                <input type="date" class="form-control" id="modalDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Time *</label>
+                                <input type="time" class="form-control" id="modalTime" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Visit</label>
+                            <textarea class="form-control" id="modalReason" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Doctor (Optional)</label>
+                            <input type="text" class="form-control" id="modalDoctor" placeholder="Enter doctor's name">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitDetailedAppointmentBtn">
+                        <i class="fas fa-calendar-check me-2"></i> Book Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Image Modal -->
+    <div class="modal fade" id="uploadImageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Medical Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadImageForm">
+                        <div class="mb-3">
+                            <label class="form-label">Select Image *</label>
+                            <input type="file" class="form-control" id="imageFile" accept=".jpg,.jpeg,.png,.gif" required>
+                            <small class="text-muted">Supported formats: JPG, PNG, GIF (Max 5MB)</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image Type *</label>
+                            <select class="form-select" id="imageType" required>
+                                <option value="">Select type</option>
+                                <option value="X-Ray">X-Ray</option>
+                                <option value="MRI">MRI</option>
+                                <option value="CT Scan">CT Scan</option>
+                                <option value="Ultrasound">Ultrasound</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="imageDescription" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitImageBtn">
+                        <i class="fas fa-upload me-2"></i> Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Prescription Modal -->
+    <div class="modal fade" id="requestPrescriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Prescription Refill</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="prescriptionRequestForm">
+                        <div class="mb-3">
+                            <label class="form-label">Medication Name *</label>
+                            <input type="text" class="form-control" id="medicationName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason for Refill *</label>
+                            <select class="form-select" id="refillReason" required>
+                                <option value="">Select reason</option>
+                                <option value="Running Low">Running Low</option>
+                                <option value="Lost Medication">Lost Medication</option>
+                                <option value="Change in Dosage">Change in Dosage</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="refillNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitRefillBtn">
+                        <i class="fas fa-paper-plane me-2"></i> Submit Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let currentPatient = null;
+        let authToken = null;
+        let currentFilter = 'all';
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            setupEventListeners();
+        });
+
+        // Check authentication
+        async function checkAuth() {
+            console.log('🔍 Checking authentication...');
+            authToken = localStorage.getItem('patientToken');
+            currentPatient = JSON.parse(localStorage.getItem('patient'));
+            
+            console.log('Token exists:', !!authToken);
+            console.log('Patient exists:', !!currentPatient);
+            
+            if (!authToken || !currentPatient) {
+                console.log('❌ Missing auth, redirecting to login');
+                window.location.href = 'plogin.html';
+                return;
+            }
+            
+            try {
+                console.log('🔄 Verifying token...');
+                const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                console.log('Verify response status:', response.status);
+                
+                if (!response.ok) {
+                    console.log('❌ Token verification failed');
+                    throw new Error('Invalid token');
+                }
+                
+                console.log('✅ Token verified, loading dashboard...');
+                loadDashboardData();
+                
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                console.log('Redirecting to login...');
+                logout();
+            }
+        }
+
+        // Setup event listeners - CORRECTED VERSION
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('[data-section]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = link.dataset.section;
+                    
+                    document.querySelectorAll('[data-section]').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+                    document.getElementById(section + 'Section').classList.add('active');
+                    
+                    if (section === 'dashboard') {
+                        loadDashboardData();
+                    } else {
+                        loadSectionData(section);
+                    }
+                });
+            });
+
+            // Quick action buttons
+            document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const section = btn.dataset.section;
+                    document.querySelector(`[data-section="${section}"]`).click();
+                });
+            });
+
+            // Logout buttons
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('mobileLogoutBtn').addEventListener('click', logout);
+
+            // Filter reports
+            document.querySelectorAll('.filter-report').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentFilter = btn.dataset.type;
+                    loadMedicalReports();
+                });
+            });
+
+            // Form submissions - FIXED with inline functions
+            const quickBookingForm = document.getElementById('quickBookingForm');
+            if (quickBookingForm) {
+                quickBookingForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleQuickBooking(e);
+                });
+            }
+
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    updateProfile(e);
+                });
+            }
+
+            const emergencyForm = document.getElementById('emergencyForm');
+            if (emergencyForm) {
+                emergencyForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    updateEmergencyContact(e);
+                });
+            }
+
+            // Modal buttons
+            document.getElementById('submitDetailedAppointmentBtn')?.addEventListener('click', submitDetailedAppointment);
+            document.getElementById('submitImageBtn')?.addEventListener('click', submitImageUpload);
+            document.getElementById('submitRefillBtn')?.addEventListener('click', submitRefillRequest);
+
+            // Refresh buttons
+            document.getElementById('refreshProfileBtn')?.addEventListener('click', loadProfileData);
+            
+            // Cancel profile button
+            document.getElementById('cancelProfileBtn')?.addEventListener('click', function() {
+                loadProfileData();
+            });
+        }
+
+        // Handle quick booking - ADDED FUNCTION
+        async function handleQuickBooking(e) {
+            e.preventDefault();
+            
+            try {
+                const appointmentData = {
+                    appointment_type: document.getElementById('appointmentType').value,
+                    scheduled_date: document.getElementById('appointmentDate').value,
+                    scheduled_start_time: document.getElementById('appointmentTime').value,
+                    department: document.getElementById('appointmentDepartment').value,
+                    reason_for_visit: 'Quick booking from dashboard'
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/patient/appointments`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(appointmentData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to book appointment');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Appointment booked successfully');
+                    document.getElementById('quickBookingForm').reset();
+                    loadAppointments();
+                }
+                
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                showError('appointmentsSection', 'Failed to book appointment. Please try again.');
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                showLoading('dashboardSection');
+                
+                // First try the real endpoint
+                const response = await fetch(`${API_BASE_URL}/patient/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    throw new Error('Session expired');
+                }
+                
+                if (response.status === 404) {
+                    // Endpoint not found, use mock data
+                    console.log('Dashboard endpoint not found, using mock data');
+                    const mockData = {
+                        patient: currentPatient,
+                        stats: {
+                            upcomingAppointments: 0,
+                            activePrescriptions: 0,
+                            medicalReports: 0,
+                            unreadMessages: 0
+                        },
+                        nextAppointment: null,
+                        recentActivity: [],
+                        recentAppointments: []
+                    };
+                    updateDashboard(mockData);
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateDashboard(result.data);
+                } else {
+                    throw new Error(result.error || 'Failed to load dashboard');
+                }
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                if (error.message.includes('Session expired')) {
+                    logout();
+                } else {
+                    // Show mock data for testing
+                    const mockData = {
+                        patient: currentPatient,
+                        stats: {
+                            upcomingAppointments: 2,
+                            activePrescriptions: 1,
+                            medicalReports: 3,
+                            unreadMessages: 0
+                        },
+                        nextAppointment: null,
+                        recentActivity: [
+                            {
+                                title: 'Welcome to MedVault Plus',
+                                type: 'system',
+                                status: 'Active',
+                                date: new Date()
+                            }
+                        ],
+                        recentAppointments: []
+                    };
+                    updateDashboard(mockData);
+                }
+            }
+        }
+
+        // Load section data
+        async function loadSectionData(section) {
+            try {
+                showLoading(section + 'Section');
+                
+                switch(section) {
+                    case 'appointments':
+                        await loadAppointments();
+                        break;
+                    case 'prescriptions':
+                        await loadPrescriptions();
+                        break;
+                    case 'reports':
+                        await loadMedicalReports();
+                        break;
+                    case 'scans':
+                        await loadMedicalScans();
+                        break;
+                    case 'access':
+                        await loadAccessLog();
+                        break;
+                    case 'profile':
+                        await loadProfileData();
+                        break;
+                }
+                
+            } catch (error) {
+                console.error(`Error loading ${section}:`, error);
+                showError(section + 'Section', `Failed to load ${section} data. Please try again.`);
+            }
+        }
+
+        // Update dashboard UI
+        function updateDashboard(data) {
+            // Update header
+            if (data.patient) {
+                document.getElementById('patientName').textContent = data.patient.name || 'Patient';
+                document.getElementById('patientId').textContent = data.patient.mrn || 'MRN-XXXXXX';
+                document.getElementById('welcomeMessage').textContent = `Welcome back, ${data.patient.name || 'Patient'}`;
+                
+                // Update avatar initials
+                const initials = (data.patient.name || 'JD').split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+                document.getElementById('profileAvatar').textContent = initials;
+            }
+            
+            // Update stats
+            if (data.stats) {
+                document.getElementById('upcomingCount').textContent = data.stats.upcomingAppointments;
+                document.getElementById('prescriptionCount').textContent = data.stats.activePrescriptions;
+                document.getElementById('reportCount').textContent = data.stats.medicalReports;
+                document.getElementById('messageCount').textContent = data.stats.unreadMessages;
+            }
+            
+            // Update next appointment
+            updateNextAppointment(data.nextAppointment);
+            
+            // Update recent activity
+            updateRecentActivity(data.recentActivity);
+            
+            // Update recent appointments
+            updateRecentAppointments(data.recentAppointments);
+        }
+
+        // Update next appointment
+        function updateNextAppointment(appointment) {
+            const container = document.getElementById('nextAppointment');
+            
+            if (!appointment) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No upcoming appointments</p>
+                        <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                            Book Appointment
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const date = new Date(appointment.scheduled_date);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            container.innerHTML = `
+                <div class="appointment-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-1 text-primary">${appointment.appointment_type}</h6>
+                            <p class="text-muted small mb-1">
+                                <i class="fas fa-user-md me-1"></i>${appointment.doctor_name || 'Doctor'}
+                            </p>
+                            <p class="text-muted small mb-2">${appointment.specialization || 'General Medicine'}</p>
+                        </div>
+                        <span class="status-badge status-confirmed">Scheduled</span>
+                    </div>
+                    <div class="mt-3">
+                        <p class="mb-1">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            <strong>${formattedDate}</strong>
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-clock me-1"></i>
+                            <strong>${appointment.scheduled_start_time || '10:00 AM'}</strong>
+                        </p>
+                        <p class="mb-0 text-muted">
+                            <i class="fas fa-hospital me-1"></i>
+                            ${appointment.department || 'General Medicine'}
+                        </p>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm w-100 mt-3" onclick="viewAppointment('${appointment.appointment_id || '1'}')">
+                        View Details
+                    </button>
+                </div>
+            `;
+        }
+
+        // Update recent activity
+        function updateRecentActivity(activities) {
+            const container = document.getElementById('recentActivity');
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No recent activity</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            activities.forEach(activity => {
+                const date = new Date(activity.date || activity.created_at);
+                const timeAgo = getTimeAgo(date);
+                const icon = getActivityIcon(activity.type);
+                
+                html += `
+                    <div class="list-group-item border-0 px-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="bg-light rounded-circle p-2">
+                                    <i class="fas fa-${icon} text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${activity.title}</h6>
+                                <p class="text-muted small mb-0">
+                                    <span class="badge bg-light text-dark me-2">${activity.type}</span>
+                                    ${timeAgo}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${getStatusClass(activity.status)}">${activity.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Update recent appointments
+        function updateRecentAppointments(appointments) {
+            const container = document.getElementById('upcomingAppointmentsList');
+            
+            if (!appointments || appointments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-plus fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No upcoming appointments</p>
+                        <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                            Book Appointment
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            appointments.forEach(apt => {
+                const date = new Date(apt.scheduled_date);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                html += `
+                    <div class="appointment-card mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${apt.appointment_type}</h6>
+                                <p class="text-muted small mb-1">
+                                    <i class="fas fa-user-md me-1"></i>${apt.doctor_name}
+                                </p>
+                            </div>
+                            <span class="status-badge ${getAppointmentStatusClass(apt.appointment_status)}">
+                                ${apt.appointment_status}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                ${formattedDate}
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                ${apt.scheduled_start_time}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-hospital me-1"></i>
+                                ${apt.department}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Load appointments
+        async function loadAppointments() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/appointments?status=Scheduled`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    // Mock data for testing
+                    updateUpcomingAppointments([]);
+                    updateAppointmentHistory([]);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateUpcomingAppointments(result.data);
+                }
+                
+                // Load appointment history
+                const historyResponse = await fetch(`${API_BASE_URL}/patient/appointments?status=Completed&limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (historyResponse.ok) {
+                    const historyResult = await historyResponse.json();
+                    if (historyResult.success) {
+                        updateAppointmentHistory(historyResult.data);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                // Show empty state
+                updateUpcomingAppointments([]);
+                updateAppointmentHistory([]);
+            }
+        }
+
+        // Update upcoming appointments
+        function updateUpcomingAppointments(appointments) {
+            const container = document.getElementById('upcomingAppointmentsList');
+            
+            if (!appointments || appointments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-plus fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No upcoming appointments</p>
+                        <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                            Book Appointment
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            appointments.forEach(apt => {
+                const date = new Date(apt.scheduled_date);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                html += `
+                    <div class="appointment-card mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${apt.appointment_type}</h6>
+                                <p class="text-muted small mb-1">${apt.doctor_name}</p>
+                            </div>
+                            <span class="status-badge ${getAppointmentStatusClass(apt.appointment_status)}">
+                                ${apt.appointment_status}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <p class="mb-1">
+                                <i class="fas fa-calendar me-1"></i>
+                                ${formattedDate} at ${apt.scheduled_start_time}
+                            </p>
+                            <p class="mb-0 text-muted">
+                                <i class="fas fa-hospital me-1"></i>
+                                ${apt.department}
+                            </p>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="viewAppointment('${apt.appointment_id}')">
+                                View
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="cancelAppointment('${apt.appointment_id}')">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Update appointment history
+        function updateAppointmentHistory(appointments) {
+            const container = document.getElementById('appointmentHistory');
+            
+            if (!appointments || appointments.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="fas fa-history fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No appointment history</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            appointments.forEach(apt => {
+                const date = new Date(apt.scheduled_date);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                html += `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td>${apt.doctor_name}</td>
+                        <td>${apt.appointment_type}</td>
+                        <td><span class="badge ${getAppointmentStatusClass(apt.appointment_status)}">${apt.appointment_status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewAppointment('${apt.appointment_id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Load prescriptions
+        async function loadPrescriptions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/prescriptions?status=Active`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    updatePrescriptions([]);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updatePrescriptions(result.data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading prescriptions:', error);
+                updatePrescriptions([]);
+            }
+        }
+
+        // Update prescriptions
+        function updatePrescriptions(prescriptions) {
+            const container = document.getElementById('activePrescriptionsList');
+            
+            if (!prescriptions || prescriptions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-prescription-bottle fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No active prescriptions</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            prescriptions.forEach(pres => {
+                const startDate = new Date(pres.start_date);
+                const endDate = pres.end_date ? new Date(pres.end_date) : null;
+                
+                html += `
+                    <div class="prescription-card mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1 text-success">${pres.medication_name}</h6>
+                                <p class="text-muted small mb-1">${pres.dosage} - ${pres.frequency}</p>
+                                <p class="text-muted small mb-2">Prescribed by: ${pres.prescribed_by_name || 'Dr. Unknown'}</p>
+                            </div>
+                            <span class="status-badge status-confirmed">Active</span>
+                        </div>
+                        <div class="mt-2">
+                            <p class="mb-1">
+                                <i class="fas fa-calendar-check me-1"></i>
+                                Started: ${startDate.toLocaleDateString()}
+                            </p>
+                            ${endDate ? `
+                            <p class="mb-1">
+                                <i class="fas fa-calendar-times me-1"></i>
+                                Ends: ${endDate.toLocaleDateString()}
+                            </p>` : ''}
+                            <p class="mb-0 text-muted">
+                                <i class="fas fa-sticky-note me-1"></i>
+                                ${pres.instructions || 'No special instructions'}
+                            </p>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-success btn-sm" onclick="requestRefill('${pres.medication_name}')">
+                                <i class="fas fa-redo me-1"></i> Request Refill
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Load medical reports
+        async function loadMedicalReports() {
+            try {
+                const endpoint = currentFilter === 'all' 
+                    ? `${API_BASE_URL}/patient/documents`
+                    : `${API_BASE_URL}/patient/documents?type=${encodeURIComponent(currentFilter)}`;
+                
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    updateMedicalReports([]);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateMedicalReports(result.data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading medical reports:', error);
+                updateMedicalReports([]);
+            }
+        }
+
+        // Update medical reports
+        function updateMedicalReports(reports) {
+            const container = document.getElementById('reportsGrid');
+            
+            if (!reports || reports.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-file-medical fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No medical reports found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            reports.forEach(report => {
+                const date = new Date(report.document_date || report.created_at);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                const fileSize = report.file_size ? formatFileSize(report.file_size) : 'Unknown size';
+                const fileIcon = getFileIcon(report.file_mime_type);
+                
+                html += `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="me-3">
+                                        <div class="bg-primary bg-opacity-10 p-2 rounded">
+                                            <i class="fas fa-${fileIcon} text-primary fa-lg"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="card-title mb-1">${report.title}</h6>
+                                        <small class="text-muted">${report.document_type}</small>
+                                    </div>
+                                </div>
+                                <p class="card-text small text-muted mb-2">
+                                    ${report.description || 'No description'}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>${formattedDate}
+                                    </small>
+                                    <small class="text-muted">${fileSize}</small>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="viewReport('${report.document_id}')">
+                                        <i class="fas fa-eye me-1"></i> View
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm" onclick="downloadReport('${report.document_id}', '${report.file_name}')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Load medical scans
+        async function loadMedicalScans() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/documents?type=X-Ray`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    updateMedicalScans([]);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateMedicalScans(result.data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading medical scans:', error);
+                updateMedicalScans([]);
+            }
+        }
+
+        // Update medical scans
+        function updateMedicalScans(scans) {
+            const gallery = document.getElementById('imageGallery');
+            
+            if (!scans || scans.length === 0) {
+                gallery.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-x-ray fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No medical images found</p>
+                        <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadImageModal">
+                            <i class="fas fa-upload me-2"></i> Upload First Image
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            scans.forEach(scan => {
+                const date = new Date(scan.document_date || scan.created_at);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                html += `
+                    <div class="col-md-3 col-sm-4 col-6">
+                        <div class="card border-0">
+                            <div class="card-img-top position-relative" style="height: 150px; background: #f8f9fa; cursor: pointer;" 
+                                 onclick="viewImage('${scan.document_id}', '${scan.title}')">
+                                <div class="h-100 d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-primary">${scan.document_type}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1 small">${scan.title}</h6>
+                                <p class="card-text small text-muted mb-1">${formattedDate}</p>
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewImage('${scan.document_id}', '${scan.title}')">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="downloadImage('${scan.document_id}', '${scan.file_name}')">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            gallery.innerHTML = html;
+        }
+
+        // Load access log
+        async function loadAccessLog() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/access-log`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    updateAccessLog([]);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateAccessLog(result.data);
+                }
+                
+            } catch (error) {
+                console.error('Error loading access log:', error);
+                updateAccessLog([]);
+            }
+        }
+
+        // Update access log
+        function updateAccessLog(logs) {
+            const container = document.getElementById('accessLogTable');
+            
+            if (!logs || logs.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <i class="fas fa-shield-alt fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No access records found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const date = new Date(log.accessed_at);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                const formattedTime = date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div>${formattedDate}</div>
+                            <small class="text-muted">${formattedTime}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${getAccessActionClass(log.action_type)}">
+                                ${formatAccessAction(log.action_type)}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="small">${log.accessed_through || 'Web Portal'}</div>
+                            <small class="text-muted">${log.ip_address || 'Unknown IP'}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${log.access_status === 'SUCCESS' ? 'bg-success' : 'bg-danger'}">
+                                ${log.access_status}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Load profile data
+        async function loadProfileData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/patient-profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    // Use currentPatient data if API fails
+                    updateProfileForm(currentPatient);
+                    return;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateProfileForm(result.patient);
+                }
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                // Use currentPatient data as fallback
+                updateProfileForm(currentPatient);
+            }
+        }
+
+        // Update profile form
+        function updateProfileForm(patient) {
+            if (!patient) return;
+            
+            document.getElementById('firstName').value = patient.first_name || patient.name?.split(' ')[0] || '';
+            document.getElementById('lastName').value = patient.last_name || patient.name?.split(' ').slice(1).join(' ') || '';
+            document.getElementById('profileEmail').value = patient.email || '';
+            document.getElementById('profilePhone').value = patient.phone || '';
+            document.getElementById('dateOfBirth').value = patient.date_of_birth || patient.dob || '';
+            document.getElementById('bloodType').value = patient.blood_type || patient.blood_group || '';
+            
+            // Update emergency contact if available
+            if (patient.emergency_contact_name) {
+                document.getElementById('emergencyName').value = patient.emergency_contact_name || '';
+                document.getElementById('emergencyRelationship').value = patient.emergency_contact_relationship || '';
+                document.getElementById('emergencyPhone').value = patient.emergency_contact_phone || '';
+            }
+        }
+
+        // Update profile
+        async function updateProfile(e) {
+            e.preventDefault();
+            
+            try {
+                const profileData = {
+                    phone: document.getElementById('profilePhone').value,
+                    address_line1: '',
+                    city: '',
+                    state: '',
+                    zip_code: ''
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/patient/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(profileData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update profile');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Profile updated successfully');
+                    loadProfileData();
+                }
+                
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showError('profileSection', 'Failed to update profile. Please try again.');
+            }
+        }
+
+        // Update emergency contact
+        async function updateEmergencyContact(e) {
+            e.preventDefault();
+            
+            try {
+                const emergencyData = {
+                    emergency_contact_name: document.getElementById('emergencyName').value,
+                    emergency_contact_relationship: document.getElementById('emergencyRelationship').value,
+                    emergency_contact_phone: document.getElementById('emergencyPhone').value
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/patient/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(emergencyData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update emergency contact');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Emergency contact updated successfully');
+                }
+                
+            } catch (error) {
+                console.error('Error updating emergency contact:', error);
+                showError('profileSection', 'Failed to update emergency contact. Please try again.');
+            }
+        }
+
+        // Submit detailed appointment
+        async function submitDetailedAppointment() {
+            try {
+                const modal = document.getElementById('bookAppointmentModal');
+                const appointmentData = {
+                    appointment_type: document.getElementById('modalAppointmentType').value,
+                    scheduled_date: document.getElementById('modalDate').value,
+                    scheduled_start_time: document.getElementById('modalTime').value,
+                    department: document.getElementById('modalDepartment').value,
+                    reason_for_visit: document.getElementById('modalReason').value
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/patient/appointments`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(appointmentData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to book appointment');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Appointment booked successfully');
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    bsModal.hide();
+                    document.getElementById('detailedAppointmentForm').reset();
+                    loadAppointments();
+                }
+                
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                alert('Failed to book appointment. Please try again.');
+            }
+        }
+
+        // Submit image upload
+        async function submitImageUpload() {
+            try {
+                const fileInput = document.getElementById('imageFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', document.getElementById('imageType').value);
+                formData.append('description', document.getElementById('imageDescription').value);
+                
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Failed to upload image');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Image uploaded successfully');
+                    const modal = document.getElementById('uploadImageModal');
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    bsModal.hide();
+                    document.getElementById('uploadImageForm').reset();
+                    loadMedicalScans();
+                }
+                
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+            }
+        }
+
+        // Submit refill request
+        async function submitRefillRequest() {
+            try {
+                const requestData = {
+                    medication_name: document.getElementById('medicationName').value,
+                    reason: document.getElementById('refillReason').value,
+                    notes: document.getElementById('refillNotes').value
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/patient/prescriptions/request-refill`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to submit refill request');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Refill request submitted successfully');
+                    const modal = document.getElementById('requestPrescriptionModal');
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    bsModal.hide();
+                    document.getElementById('prescriptionRequestForm').reset();
+                }
+                
+            } catch (error) {
+                console.error('Error submitting refill request:', error);
+                alert('Failed to submit refill request. Please try again.');
+            }
+        }
+
+        // View appointment
+        function viewAppointment(appointmentId) {
+            alert(`Viewing appointment ${appointmentId} - Implement detailed view here`);
+        }
+
+        // Cancel appointment
+        async function cancelAppointment(appointmentId) {
+            if (!confirm('Are you sure you want to cancel this appointment?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/appointments/${appointmentId}/cancel`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reason: 'Patient cancelled via portal'
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to cancel appointment');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Appointment cancelled successfully');
+                    loadAppointments();
+                }
+                
+            } catch (error) {
+                console.error('Error cancelling appointment:', error);
+                alert('Failed to cancel appointment. Please try again.');
+            }
+        }
+
+        // View report
+        function viewReport(documentId) {
+            alert(`Viewing report ${documentId} - Implement PDF viewer here`);
+        }
+
+        // Download report
+        async function downloadReport(documentId, fileName) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/documents/${documentId}/download`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to download report');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Error downloading report:', error);
+                alert('Failed to download report. Please try again.');
+            }
+        }
+
+        // View image
+        function viewImage(documentId, title) {
+            const viewer = document.getElementById('imageViewer');
+            viewer.innerHTML = `
+                <div class="text-center">
+                    <h6 class="mb-3">${title}</h6>
+                    <div class="bg-light rounded p-3 mb-3" style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-image fa-5x text-muted"></i>
+                    </div>
+                    <p class="text-muted small">Image preview would appear here</p>
+                    <div class="mt-3">
+                        <button class="btn btn-primary me-2" onclick="downloadImage('${documentId}', '${title}.jpg')">
+                            <i class="fas fa-download me-1"></i> Download
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="closeImageViewer()">
+                            <i class="fas fa-times me-1"></i> Close
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Close image viewer
+        function closeImageViewer() {
+            const viewer = document.getElementById('imageViewer');
+            viewer.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Select an image to view</p>
+                </div>
+            `;
+        }
+
+        // Download image
+        async function downloadImage(documentId, fileName) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/patient/documents/${documentId}/download`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to download image');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Error downloading image:', error);
+                alert('Failed to download image. Please try again.');
+            }
+        }
+
+        // Request refill
+        function requestRefill(medicationName) {
+            document.getElementById('medicationName').value = medicationName;
+            const modal = new bootstrap.Modal(document.getElementById('requestPrescriptionModal'));
+            modal.show();
+        }
+
+        // Helper functions
+        function showLoading(sectionId) {
+            const errorDiv = document.getElementById(sectionId + 'Error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        function showError(sectionId, message) {
+            const errorDiv = document.getElementById(sectionId + 'Error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showSuccess(message) {
+            alert(message);
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) return `${days} day${days !== 1 ? 's' : ''} ago`;
+            if (hours > 0) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+            if (minutes > 0) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+            return 'Just now';
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                'appointment': 'calendar-check',
+                'prescription': 'prescription-bottle-medical',
+                'report': 'file-medical',
+                'default': 'bell'
+            };
+            return icons[type] || icons.default;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'Scheduled': 'bg-primary',
+                'Completed': 'bg-success',
+                'Cancelled': 'bg-danger',
+                'Active': 'bg-success',
+                'Expired': 'bg-warning',
+                'default': 'bg-secondary'
+            };
+            return classes[status] || classes.default;
+        }
+
+        function getAppointmentStatusClass(status) {
+            const classes = {
+                'Scheduled': 'status-confirmed',
+                'Completed': 'bg-success text-white',
+                'Cancelled': 'status-cancelled',
+                'No Show': 'bg-warning text-dark',
+                'default': 'bg-secondary text-white'
+            };
+            return classes[status] || classes.default;
+        }
+
+        function getFileIcon(mimeType) {
+            if (!mimeType) return 'file';
+            if (mimeType.includes('pdf')) return 'file-pdf';
+            if (mimeType.includes('image')) return 'file-image';
+            if (mimeType.includes('text')) return 'file-alt';
+            return 'file';
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getAccessActionClass(action) {
+            const classes = {
+                'VIEW_PATIENT': 'bg-info',
+                'VIEW_DOCUMENT': 'bg-primary',
+                'VIEW_APPOINTMENT': 'bg-success',
+                'CREATE_APPOINTMENT': 'bg-warning text-dark',
+                'default': 'bg-secondary'
+            };
+            return classes[action] || classes.default;
+        }
+
+        function formatAccessAction(action) {
+            return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function logout() {
+            localStorage.removeItem('patientToken');
+            localStorage.removeItem('patient');
+            window.location.href = 'plogin.html';
+        }
+
+    </script>
+</body>
+</html>
